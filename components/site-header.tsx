@@ -35,15 +35,9 @@ export function SiteHeader() {
   const [searchFocused, setSearchFocused] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
 
-  // DO NOT RENDER CUSTOMER STOREFRONT HEADER ON SELLER OR ADMIN WORKSPACES
-  if (pathname.startsWith("/seller") || pathname.startsWith("/admin")) {
-    return null;
-  }
-
   useEffect(() => {
     const saved = window.localStorage.getItem("swarnasetu-theme");
-    const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)").matches;
-    const useDark = saved ? saved === "dark" : prefersDark;
+    const useDark = saved === "dark";
     setDark(useDark);
     document.documentElement.dataset.theme = useDark ? "dark" : "light";
   }, []);
@@ -57,6 +51,11 @@ export function SiteHeader() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // DO NOT RENDER CUSTOMER STOREFRONT HEADER ON SELLER OR ADMIN WORKSPACES
+  if (pathname.startsWith("/seller") || pathname.startsWith("/admin")) {
+    return null;
+  }
 
   function toggleTheme() {
     const next = !dark;
