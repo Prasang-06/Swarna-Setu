@@ -50,6 +50,9 @@ export default function ShopProfilePage() {
       list = list.filter(p =>
         p.name.toLowerCase().includes(q) ||
         p.category.toLowerCase().includes(q) ||
+        p.purity.toLowerCase().includes(q) ||
+        (p.description && p.description.toLowerCase().includes(q)) ||
+        (p.stoneDetails && p.stoneDetails.toLowerCase().includes(q)) ||
         (p.tag && p.tag.toLowerCase().includes(q))
       );
     }

@@ -302,6 +302,24 @@ h1, h2, h3, h4, h5, h6 {
   flex-shrink: 0;
 }
 
+.search-icon-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--muted);
+  flex-shrink: 0;
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.search-icon-btn:hover {
+  color: var(--gold);
+  transform: scale(1.08);
+}
+
 .search-field input {
   width: 100%;
   min-width: 0;

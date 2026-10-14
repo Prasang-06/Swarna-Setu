@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, type FormEvent } from "react";
+import { useMemo, useState, useEffect, type FormEvent } from "react";
 import {
   ArrowRight, ArrowUpRight, BadgeCheck, Check, ChevronRight, Gem,
   Heart, MapPin, Search, ShieldCheck, Sparkles, Star, Store,
@@ -88,6 +88,20 @@ export default function HomePage() {
   const [shopFilter, setShopFilter] = useState("all");
   const [sort, setSort] = useState("featured");
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const q = params.get("q") || params.get("search");
+      if (q) {
+        setSearch(q);
+        const el = document.getElementById("discover");
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth" });
+        }
+      }
+    }
+  }, []);
+
   // Modals
   const [modalProduct, setModalProduct] = useState<Product | null>(null);
   const [customOpen, setCustomOpen] = useState(false);
@@ -159,6 +173,7 @@ export default function HomePage() {
           p.name.toLowerCase().includes(q) ||
           p.category.toLowerCase().includes(q) ||
           p.purity.toLowerCase().includes(q) ||
+          (p.description && p.description.toLowerCase().includes(q)) ||
           (p.tag && p.tag.toLowerCase().includes(q)) ||
           (p.stoneDetails && p.stoneDetails.toLowerCase().includes(q)) ||
           (shop && `${shop.name} ${shop.location}`.toLowerCase().includes(q))

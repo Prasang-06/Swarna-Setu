@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useParams } from "next/navigation";
-import { useState, useMemo } from "react";
+import { useParams, useSearchParams } from "next/navigation";
+import { useState, useMemo, useEffect, Suspense } from "react";
 import {
   ChevronRight, ArrowRight, ShieldCheck, Heart, Scale, Store,
   SlidersHorizontal, X, Search, Sparkles, Filter
@@ -65,17 +65,38 @@ const CATEGORY_METADATA: Record<string, { title: string; subtitle: string; heroI
   },
 };
 
-export default function CategoryDetailPage() {
+function CategoryDetailContent() {
   const params = useParams<{ slug: string }>();
+  const searchParams = useSearchParams();
   const rawSlug = (params.slug || "all").toLowerCase();
 
   const { products, shops, favorites, compareIds, toggleFavorite, toggleCompare, showToast } = useDemoStore();
 
+  const initialSearch = searchParams.get("q") || searchParams.get("search") || "";
   const [purity, setPurity] = useState("all");
   const [priceMode, setPriceMode] = useState("all");
   const [shopFilter, setShopFilter] = useState("all");
   const [sort, setSort] = useState("featured");
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(initialSearch);
+
+  useEffect(() => {
+    const q = searchParams.get("q") || searchParams.get("search") || "";
+    setSearch(q);
+  }, [searchParams]);
+
+  function handleSearchChange(val: string) {
+    setSearch(val);
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      if (val.trim()) {
+        url.searchParams.set("q", val.trim());
+      } else {
+        url.searchParams.delete("q");
+        url.searchParams.delete("search");
+      }
+      window.history.replaceState({}, "", url.pathname + (url.search ? url.search : ""));
+    }
+  }
 
   const meta = CATEGORY_METADATA[rawSlug] || {
     title: `${rawSlug.charAt(0).toUpperCase() + rawSlug.slice(1)} Collection`,
@@ -104,11 +125,16 @@ export default function CategoryDetailPage() {
 
       // Keyword search
       if (search.trim()) {
-        const q = search.toLowerCase();
+        const q = search.trim().toLowerCase();
+        const shop = shops.find(s => s.id === p.shopId);
         const match =
           p.name.toLowerCase().includes(q) ||
-          p.description.toLowerCase().includes(q) ||
-          (p.tag && p.tag.toLowerCase().includes(q));
+          p.category.toLowerCase().includes(q) ||
+          p.purity.toLowerCase().includes(q) ||
+          (p.description && p.description.toLowerCase().includes(q)) ||
+          (p.tag && p.tag.toLowerCase().includes(q)) ||
+          (p.stoneDetails && p.stoneDetails.toLowerCase().includes(q)) ||
+          (shop && `${shop.name} ${shop.location}`.toLowerCase().includes(q));
         if (!match) return false;
       }
 
@@ -119,7 +145,7 @@ export default function CategoryDetailPage() {
       if (sort === "az") return a.name.localeCompare(b.name);
       return 0; // featured
     });
-  }, [products, rawSlug, purity, priceMode, shopFilter, search, sort]);
+  }, [products, shops, rawSlug, purity, priceMode, shopFilter, search, sort]);
 
   return (
     <>
@@ -162,7 +188,7 @@ export default function CategoryDetailPage() {
                 marginBottom: 8,
               }}
             >
-              Curated Nagpur Showrooms · {filteredProducts.length} Pieces Available
+              Curated Nagpur Showrooms · {filteredProducts.length} Pieces Available{search.trim() ? ` for "${search.trim()}"` : ""}
             </span>
             <h1 style={{ fontSize: "clamp(26px, 3.2vw, 38px)", margin: "0 0 10px", color: "#fff", fontFamily: "var(--font-serif)" }}>
               {meta.title}
@@ -181,13 +207,13 @@ export default function CategoryDetailPage() {
               <div className="search-field" style={{ flex: "1 1 200px", maxWidth: 280 }}>
                 <Search size={14} className="search-icon" />
                 <input
-                  placeholder="Filter pieces by name or style..."
+                  placeholder="Filter pieces by name, stone, style..."
                   value={search}
-                  onChange={e => setSearch(e.target.value)}
+                  onChange={e => handleSearchChange(e.target.value)}
                   aria-label="Filter category pieces"
                 />
                 {search && (
-                  <button type="button" className="search-clear-btn" onClick={() => setSearch("")}>
+                  <button type="button" className="search-clear-btn" onClick={() => handleSearchChange("")} aria-label="Clear filter search">
                     <X size={12} />
                   </button>
                 )}
@@ -332,8 +358,8 @@ export default function CategoryDetailPage() {
             </div>
           ) : (
             <div className="empty-state" style={{ padding: "60px 20px" }}>
-              <strong>No jewellery pieces found in {meta.title}</strong>
-              <p>Try resetting your active purity or pricing mode filters.</p>
+              <strong>No jewellery pieces found {search.trim() ? `matching "${search.trim()}"` : `in ${meta.title}`}</strong>
+              <p>Try clearing your search query or resetting your active purity / price filters.</p>
               <button
                 type="button"
                 className="button button--light"
@@ -342,10 +368,10 @@ export default function CategoryDetailPage() {
                   setPurity("all");
                   setPriceMode("all");
                   setShopFilter("all");
-                  setSearch("");
+                  handleSearchChange("");
                 }}
               >
-                Clear Category Filters
+                Clear Filters &amp; Search
               </button>
             </div>
           )}
@@ -353,5 +379,13 @@ export default function CategoryDetailPage() {
       </main>
       <SiteFooter />
     </>
+  );
+}
+
+export default function CategoryDetailPage() {
+  return (
+    <Suspense fallback={<div className="page-shell" style={{ minHeight: "60vh", display: "grid", placeItems: "center", color: "var(--muted)" }}>Loading collection...</div>}>
+      <CategoryDetailContent />
+    </Suspense>
   );
 }

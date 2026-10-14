@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useEffect, useState, useRef } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState, useRef, type FormEvent } from "react";
 import {
   Menu, X, Search, Moon, Sun, Gem, Store, LayoutDashboard,
   Heart, ShoppingBag, ShieldCheck, MapPin, ChevronDown, Sparkles, ArrowRight, Scale,
@@ -27,13 +27,14 @@ const navCategories = [
 ];
 
 export function SiteHeader() {
+  const router = useRouter();
   const pathname = usePathname();
   const { products, shops, favorites, compareIds, setSavedDrawerOpen, currentUser, logoutUser } = useDemoStore();
   const [menuOpen, setMenuOpen] = useState(false);
   const [dark, setDark] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
-  const searchRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     const saved = window.localStorage.getItem("swarnasetu-theme");
@@ -64,6 +65,15 @@ export function SiteHeader() {
     window.localStorage.setItem("swarnasetu-theme", next ? "dark" : "light");
   }
 
+  function handleSearchSubmit(e: FormEvent) {
+    e.preventDefault();
+    const q = searchQuery.trim();
+    if (!q) return;
+    setSearchFocused(false);
+    setMenuOpen(false);
+    router.push(`/category/all?q=${encodeURIComponent(q)}`);
+  }
+
   // Live search filtering
   const cleanQ = searchQuery.trim().toLowerCase();
   const matchedProducts = cleanQ
@@ -76,10 +86,12 @@ export function SiteHeader() {
             p.category.toLowerCase().includes(cleanQ) ||
             p.purity.toLowerCase().includes(cleanQ) ||
             (p.tag && p.tag.toLowerCase().includes(cleanQ)) ||
-            (shop && shop.name.toLowerCase().includes(cleanQ))
+            (p.description && p.description.toLowerCase().includes(cleanQ)) ||
+            (p.stoneDetails && p.stoneDetails.toLowerCase().includes(cleanQ)) ||
+            (shop && `${shop.name} ${shop.location}`.toLowerCase().includes(cleanQ))
           );
         })
-        .slice(0, 4)
+        .slice(0, 5)
     : [];
 
   const matchedShops = cleanQ
@@ -128,9 +140,16 @@ export function SiteHeader() {
           </Link>
 
           {/* Interactive Search Bar */}
-          <div className="header-search-wrapper" ref={searchRef}>
+          <form onSubmit={handleSearchSubmit} className="header-search-wrapper" ref={searchRef}>
             <div className={`search-field ${searchFocused ? "is-focused" : ""}`}>
-              <Search size={15} className="search-icon" />
+              <button
+                type="submit"
+                className="search-icon-btn"
+                aria-label="Search"
+                title="Search jewellery and shops"
+              >
+                <Search size={15} className="search-icon" />
+              </button>
               <input
                 id="site-search-input"
                 type="search"
@@ -211,11 +230,11 @@ export function SiteHeader() {
 
                     <div className="search-dropdown-footer">
                       <Link
-                        href={`/#discover`}
+                        href={`/category/all?q=${encodeURIComponent(cleanQ)}`}
                         onClick={() => setSearchFocused(false)}
                         className="search-view-all"
                       >
-                        Explore all in collection <ArrowRight size={12} />
+                        View all results ({matchedProducts.length + matchedShops.length}) <ArrowRight size={12} />
                       </Link>
                     </div>
                   </>
@@ -227,7 +246,7 @@ export function SiteHeader() {
                 )}
               </div>
             )}
-          </div>
+          </form>
 
           {/* Right Header Utilities */}
           <div className="header-actions">
@@ -331,16 +350,24 @@ export function SiteHeader() {
         {/* Mobile Navigation Drawer */}
         {menuOpen && (
           <div className="mobile-menu-drawer">
-            <div className="mobile-menu-search">
+            <form onSubmit={handleSearchSubmit} className="mobile-menu-search">
               <div className="search-field">
-                <Search size={15} />
+                <button
+                  type="submit"
+                  className="search-icon-btn"
+                  aria-label="Search"
+                  title="Search jewellery and shops"
+                >
+                  <Search size={15} />
+                </button>
                 <input
                   placeholder="Search jewellery & shops..."
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
+                  aria-label="Search jewellery and shops"
                 />
               </div>
-            </div>
+            </form>
 
             <div className="mobile-category-list">
               <div className="mobile-section-title">Shop by Category</div>
