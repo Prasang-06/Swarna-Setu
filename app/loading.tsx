@@ -1,0 +1,3 @@
+export default function Loading() {
+  return <main className="page-shell" aria-label="Loading page"><div className="page-heading"><div className="skeleton-line skeleton-line--short"/><div className="skeleton-line skeleton-line--title"/><div className="skeleton-line skeleton-line--wide"/></div><div className="products-grid" aria-hidden="true">{Array.from({length:8},(_,i)=><div key={i} className="product-card"><div className="skeleton-block"/><div style={{padding:14}}><div className="skeleton-line skeleton-line--short"/><div className="skeleton-line"/><div className="skeleton-line skeleton-line--wide"/></div></div>)}</div></main>;
+}
